@@ -1,12 +1,3 @@
-"""BTVN #3 — teacher-style LangChain flight agent.
-
-Live run (needs an OpenRouter key and an OpenRouter model slug):
-    python flight_agent.py --strategy react --approve
-    python flight_agent.py --strategy plan_then_execute --approve
-    python flight_agent.py --strategy hybrid --approve
-
-No real booking/payment is made. Inventory and booking ledger are in memory.
-"""
 from __future__ import annotations
 
 import argparse
