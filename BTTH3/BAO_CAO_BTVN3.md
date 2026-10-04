@@ -169,14 +169,12 @@ Trong ca thường, ba chiến lược đều tạo booking xác minh cho chuy�
 **Diễn giải:** Plan-then-Execute dùng ít decision steps nhất trong benchmark nhỏ này. Không thể kết luận nó luôn hiệu quả hơn: đây là model giả với quy tắc cố định, không đo chất lượng lập kế hoạch, độ trễ, chi phí token hay tỷ lệ lỗi của LLM thật. `flight_agent.py --strategy all --approve` so sánh trực tiếp ba mẫu với cùng model và ca thành công; bỏ `--approve` để so sánh ca thiếu quyền; chọn `--case no_inventory` để so ca không có chuyến. Phần online ghi lượt model, tool và thời gian. Kết quả phụ thuộc model và có thể tiêu thụ quota; bảng offline vẫn là kết quả lặp lại chính xác.
 
 ![Kết quả benchmark offline](offline.png)
-Dán ảnh terminal kết quả `--mode eval` tại đây.
 
 ### 7.2 So sánh online bằng OpenRouter
 
 Lệnh `python .\outputs\flight_agent.py --strategy all --case success --approve` được chạy trong môi trường ảo `.venv310`, với model `google/gemma-4-26b-a4b-it`. Cờ `--approve` xác nhận quyền thực hiện thao tác đặt vé mock. Cả ba chiến lược dùng cùng yêu cầu, inventory, tool và harness.
 
 ![Kết quả chạy online](online.png) 
-Dán ảnh terminal có đủ ba chiến lược, trạng thái, số lượt model/tool và thời gian tại đây. Đảm bảo API key chỉ hiện dưới dạng dấu `*`.
 
 Cả ba lượt chạy đều có `done=True` và `expected=True`, nghĩa là chương trình kiểm chứng được booking hợp lệ cho ca thành công. Mỗi chiến lược gọi tool hai lần: tìm chuyến và đặt chuyến. Plan-then-Execute dùng thêm một lượt model để lập kế hoạch, vì vậy tổng số lượt model là bốn; ReAct và Hybrid có ba lượt. Trong lần đo này ReAct nhanh nhất (5,22 giây), kế đến Hybrid (5,79 giây), rồi Plan-then-Execute (8,26 giây).
 
