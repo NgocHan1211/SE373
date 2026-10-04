@@ -1,10 +1,3 @@
-"""BTVN #3: mock flight booking agent, harness, and strategy benchmark.
-
-Run: python agent_dat_ve_langchain.py --mode eval
-     python agent_dat_ve_langchain.py --mode demo --strategy hybrid --scenario normal
-No API key or network is used. LangChain @tool wrappers are included; the
-deterministic orchestration makes experiments reproducible.
-"""
 from __future__ import annotations
 import argparse
 import json
@@ -224,8 +217,6 @@ def run_agent(strategy: str, scenario: str, max_tool_calls: int = 8) -> RunResul
     answer = ""
     status = Status.BLOCKED.value
     bid = fid = None
-    # Count controller decisions, not Python statements. Plan-then-Execute
-    # creates one plan; ReAct decides at each observation; Hybrid plans then adapts.
     steps = 1 if strategy in {"plan_execute", "hybrid"} else 0
     grounded = True
     errors = req.validate()
@@ -249,7 +240,7 @@ def run_agent(strategy: str, scenario: str, max_tool_calls: int = 8) -> RunResul
         trace.append("PLAN: validate → search → choose cheapest → authorize → book → verify")
     elif strategy == "hybrid":
         trace.append("PLAN: find option, check consent, confirm and verify; react to each observation")
-    # ReAct, Plan-then-Execute and Hybrid use the same search step and environment.
+    
     found = invoke("search_flights", {"origin": req.origin, "destination": req.destination,
                    "departure_date": req.departure_date, "passengers": req.passengers,
                    "max_price_vnd": req.max_price_vnd}, lambda: tools.search_flights(
@@ -272,7 +263,7 @@ def run_agent(strategy: str, scenario: str, max_tool_calls: int = 8) -> RunResul
         fid = chosen["flight_id"]
         trace.append(f"SELECT cheapest available: {fid}")
         if strategy == "react":
-            steps += 1  # decide whether booking is the next useful action
+            steps += 1  
         permitted, reason = PermissionGate.authorize("book_flight", req)
         trace.append(f"PERMISSION {'ALLOW' if permitted else 'DENY'}: {reason}")
         steps += 1
@@ -302,7 +293,6 @@ def run_agent(strategy: str, scenario: str, max_tool_calls: int = 8) -> RunResul
                 if not verified:
                     handoff = make_handoff("Không xác minh được booking.", trace, {"booking_id": bid},
                                            "Nhân viên cần kiểm tra trạng thái đặt vé.")
-    # Grounding is guaranteed for tool-derived flight and price fields in the response.
     completion = bool(bid and status == Status.COMPLETED.value)
     return RunResult(strategy, scenario, status, answer, bid, fid, tools.calls, steps,
                      handoff, trace, grounded, 0, completion)
