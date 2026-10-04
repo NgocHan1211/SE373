@@ -22,7 +22,6 @@ from langchain_core.tools import tool
 from langchain_openai import ChatOpenAI
 
 
-# Constraints are DATA. The model receives them, but Python checks them too.
 @dataclass
 class Constraints:
     origin: str = "SGN"
@@ -119,8 +118,7 @@ def run(strategy: str, c: Constraints) -> dict[str, Any]:
     model_name = os.getenv("OPENROUTER_MODEL", "google/gemma-4-26b-a4b-it")
     if not os.getenv("OPENROUTER_API_KEY"):
         raise SystemExit("Set OPENROUTER_API_KEY before live mode.")
-    # OpenRouter exposes an OpenAI-compatible endpoint. ChatOpenAI uses that
-    # stable protocol while LangChain still manages the agent/tool loop.
+        
     model = ChatOpenAI(
         model=model_name,
         base_url="https://openrouter.ai/api/v1",
@@ -133,20 +131,17 @@ def run(strategy: str, c: Constraints) -> dict[str, Any]:
     )
     h = Harness(c)
     tools = make_tools(c, h)
-    # PTE spends one model call creating the plan, so leave nine for the executor.
     limit = ModelCallLimitMiddleware(run_limit=9 if strategy == "plan_then_execute" else 10)
 
     started = perf_counter()
     extra_model_calls = 0
     if strategy == "react":
-        # LangChain runs the ReAct model → tool → observation loop.
         agent = create_agent(model=model, tools=tools,
                              system_prompt="Use tools for facts. Search, inspect results, then act. "
                                            "Never claim booking unless book_flight confirms it. " + c.to_prompt(),
                              middleware=[limit])
         result = agent.invoke({"messages": [{"role": "user", "content": c.to_prompt()}]})
     elif strategy == "plan_then_execute":
-        # First make a plan without tools, then give that plan to a tool-enabled executor.
         plan = model.invoke("Return a short numbered plan for this request. Do not claim success.\n"
                             + c.to_prompt()).content
         extra_model_calls = 1
@@ -159,7 +154,6 @@ def run(strategy: str, c: Constraints) -> dict[str, Any]:
                                               "content": f"Plan:\n{plan}\n\nRequest:\n{c.to_prompt()}"}]})
         h.trace.insert(0, f"plan: {plan}")
     elif strategy == "hybrid":
-        # One agent plans at a high level, then revises its next action from observations.
         agent = create_agent(model=model, tools=tools,
                              system_prompt="First form a brief internal plan. Then act with tools, "
                                            "revising the next step from each observation. "
