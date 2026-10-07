@@ -94,7 +94,7 @@ Do đó tên file không phải quy tắc lựa chọn. Ngày mua và nội dung
 
 **Ảnh A — lượt A, mua 28/09 và yêu cầu hoàn 06/10:**
 
-![Ảnh A — kết quả tra cứu chính sách trước tháng 10](A.png)
+![Ảnh A — kết quả tra cứu chính sách trước tháng 10](result1.png)
 
 **Lưu ý về phép đếm ngày:** ảnh A hiển thị 9 ngày theo cách đếm gộp cả ngày mua và ngày yêu cầu. Khoảng thời gian đã trôi qua giữa hai mốc là 8 ngày (06/10 trừ 28/09). Cả 8 và 9 đều vượt giới hạn 7 ngày nên kết luận không đủ điều kiện không thay đổi; phần phân tích trong báo cáo dùng 8 ngày đã trôi qua.
 
@@ -115,7 +115,7 @@ Lượt này kiểm tra chính sách B với tên file ban đầu; yêu cầu B 
 
 **Ảnh B — lượt B dùng tên file gốc, trước khi đổi tên:**
 
-![Ảnh B — chính sách áp dụng trước khi đổi tên file](B.png)
+![Ảnh B — chính sách áp dụng trước khi đổi tên file](result2.png)
 
 ### 4.3. Trường hợp B sau khi đổi tên file
 
@@ -140,7 +140,7 @@ Trace của lượt mới ghi nhận `list_files` trả về `new-rules.md` và 
 
 **Ảnh B-s — lượt B sau khi sửa/đổi tên, dẫn căn cứ `new-rules.md`:**
 
-![Ảnh B-s — kết quả sau khi đổi tên file](B-s.png)
+![Ảnh B-s — kết quả sau khi đổi tên file](result3.png)
 
 ### 4.4. Trường hợp A sau khi đổi tên — kiểm tra bổ sung
 
@@ -158,7 +158,7 @@ Trace cho thấy agent liệt kê hai tên mới, đọc cả hai chính sách v
 
 **Ảnh miss — trường hợp thiếu ngày yêu cầu và trạng thái kích hoạt:**
 
-![Ảnh miss — agent yêu cầu dữ kiện còn thiếu](miss.png)
+![Ảnh miss — agent yêu cầu dữ kiện còn thiếu](result4.png)
 
 ## 5. Kiểm tra tool và test code
 
