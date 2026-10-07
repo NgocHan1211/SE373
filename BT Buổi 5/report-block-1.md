@@ -200,13 +200,12 @@ Nếu agent không có tool tìm file, chỉ sửa prompt **không giải quyế
 
 | Ảnh | Vị trí trong báo cáo | Nội dung |
 |---|---|---|
-| `A.png` | Trường hợp A | Kết quả với ngày mua 28/09 và chính sách trước tháng 10. |
-| `B.png` | Trường hợp B trước khi đổi tên | Kết quả B trỏ tới `policy-from-oct.md`. |
+| `result1.png` | Trường hợp A | Kết quả với ngày mua 28/09 và chính sách trước tháng 10. |
+| `result2.png` | Trường hợp B trước khi đổi tên | Kết quả B trỏ tới `policy-from-oct.md`. |
 | `change.png` | B sau khi đổi tên | File Explorer hiển thị `old-rules.md` và `new-rules.md`. |
-| `B-s.png` | B sau khi sửa/đổi tên | Kết quả trỏ tới `data/policies/new-rules.md`. |
-| `miss.png` | Thiếu thông tin | Agent hỏi ngày yêu cầu hoàn và trạng thái kích hoạt. |
+| `result3.png` | B sau khi sửa/đổi tên | Kết quả trỏ tới `data/policies/new-rules.md`. |
+| `result4.png` | Thiếu thông tin | Agent hỏi ngày yêu cầu hoàn và trạng thái kích hoạt. |
 
-Các ảnh nằm cạnh file Markdown; đường dẫn ảnh là tương đối để GitHub hiển thị khi cả năm PNG được commit cùng report.
 
 ## 8. Kết luận
 
