@@ -20,7 +20,7 @@ Bài tập xây dựng agent đặt vé máy bay trên inventory giả lập, t�
 ## Mục lục
 
 1. [Đề bài và phạm vi](#1-đề-bài-và-phạm-vi)
-2. [Yêu cầu thiết kế và tiêu chí của hệ thống](#2-yêu-cầu-thiết-kế-và-tiêu-chí-của-hệ-thống)
+2. [Tìm hiểu LangChain, LangGraph và yêu cầu thiết kế](#2-tìm-hiểu-langchain-langgraph-và-yêu-cầu-thiết-kế)
 3. [Thiết kế hệ thống](#3-thiết-kế-hệ-thống)
 4. [Bốn thành phần harness](#4-bốn-thành-phần-harness)
 5. [Ba chiến lược agent](#5-ba-chiến-lược-agent)
@@ -36,17 +36,31 @@ Bài tập xây dựng agent đặt vé máy bay trên inventory giả lập, t�
 
 Chương trình không kết nối hãng hàng không, không giữ chỗ và không thu tiền thật. Inventory cùng booking ledger nằm trong bộ nhớ. `flight_agent.py` minh họa cách dùng LangChain với model thật; cần cấu hình nhà cung cấp và API key. `agent_dat_ve_langchain.py` là benchmark tất định, chạy offline để minh họa luồng và so sánh theo cùng dữ liệu.
 
-## 2. Yêu cầu thiết kế và tiêu chí của hệ thống
+## 2. Tìm hiểu LangChain, LangGraph và yêu cầu thiết kế
 
-Hệ thống được thiết kế theo nguyên tắc tách phần suy luận của model khỏi các quyết định nghiệp vụ cần kiểm soát bằng code:
+### 2.1 LangChain
+
+LangChain là framework cung cấp các thành phần cấp cao để xây dựng ứng dụng dùng mô hình ngôn ngữ, gồm tích hợp model, prompt và tool. Với agent, `create_agent` nhận model, danh sách tool và system prompt; model có thể yêu cầu gọi tool, nhận kết quả tool rồi tiếp tục xử lý cho đến khi tạo câu trả lời cuối. Hàm `@tool` giúp khai báo hàm Python để agent sử dụng.
+
+Trong bài này, `flight_agent.py` dùng `create_agent` để kết nối model với hai tool mock `search_flights` và `book_flight`. `ModelCallLimitMiddleware` giới hạn số lượt gọi model. OpenRouter là nơi cung cấp model, còn `ChatOpenAI` là adapter tương thích API để nối model với LangChain.
+
+### 2.2 LangGraph
+
+LangGraph là framework/runtime điều phối agent và quy trình nhiều bước. Khái niệm chính của Graph API là **state** (dữ liệu trạng thái), **node** (bước xử lý) và **edge** (hướng chuyển giữa các bước). Nhờ vậy có thể kết hợp bước Python xác định với bước model suy luận, tạo vòng lặp, lưu trạng thái hoặc dừng để chờ con người duyệt.
+
+Trong triển khai này, `create_agent` của LangChain chạy trên runtime LangGraph để điều phối vòng model → tool → observation. Phần code không tự khai báo `StateGraph`; các kiểm tra nghiệp vụ được viết tường minh trong `Harness` để dễ đọc và kiểm tra. Cách phân chia này dùng API agent cấp cao của LangChain, đồng thời dựa vào runtime LangGraph ở bên dưới.
+
+### 2.3 Yêu cầu thiết kế áp dụng cho bài toán
+
+Hệ thống tách phần model đề xuất hành động khỏi các quyết định nghiệp vụ cần kiểm soát bằng code:
 
 1. Lưu yêu cầu đặt vé thành đối tượng `Constraints`, có thể kiểm tra và chuyển thành nội dung đầu vào cho model.
 2. Model đề xuất hành động qua tool; harness Python kiểm tra quyền và điều kiện trước khi tool đặt vé thực hiện.
 3. Xác minh hoàn tất bằng cách đọc booking trong dữ liệu, không dựa riêng vào câu trả lời cuối của model.
 4. Nếu không thể hoàn thành, tạo thông tin bàn giao có lý do, trạng thái và câu hỏi tiếp theo cho người dùng.
-5. Dùng LangChain để kết nối model, tool, system prompt và giới hạn số lượt gọi; dùng LangGraph runtime để điều phối vòng agent.
+5. Giới hạn số lượt gọi model để tránh vòng lặp không dừng và kiểm soát thời gian chạy.
 
-Các nguyên tắc này được áp dụng cụ thể vào bài toán đặt vé máy bay với inventory và booking ledger giả lập.
+Các khái niệm được đối chiếu với tài liệu chính thức: [LangChain Agents](https://docs.langchain.com/oss/python/langchain/agents) và [LangGraph Overview](https://docs.langchain.com/oss/python/langgraph/overview).
 
 ## 3. Thiết kế hệ thống
 
@@ -169,12 +183,14 @@ Trong ca thường, ba chiến lược đều tạo booking xác minh cho chuy�
 **Diễn giải:** Plan-then-Execute dùng ít decision steps nhất trong benchmark nhỏ này. Không thể kết luận nó luôn hiệu quả hơn: đây là model giả với quy tắc cố định, không đo chất lượng lập kế hoạch, độ trễ, chi phí token hay tỷ lệ lỗi của LLM thật. `flight_agent.py --strategy all --approve` so sánh trực tiếp ba mẫu với cùng model và ca thành công; bỏ `--approve` để so sánh ca thiếu quyền; chọn `--case no_inventory` để so ca không có chuyến. Phần online ghi lượt model, tool và thời gian. Kết quả phụ thuộc model và có thể tiêu thụ quota; bảng offline vẫn là kết quả lặp lại chính xác.
 
 ![Kết quả benchmark offline](offline.png)
+Dán ảnh terminal kết quả `--mode eval` tại đây.
 
 ### 7.2 So sánh online bằng OpenRouter
 
 Lệnh `python .\outputs\flight_agent.py --strategy all --case success --approve` được chạy trong môi trường ảo `.venv310`, với model `google/gemma-4-26b-a4b-it`. Cờ `--approve` xác nhận quyền thực hiện thao tác đặt vé mock. Cả ba chiến lược dùng cùng yêu cầu, inventory, tool và harness.
 
 ![Kết quả chạy online](online.png) 
+Dán ảnh terminal có đủ ba chiến lược, trạng thái, số lượt model/tool và thời gian tại đây. Đảm bảo API key chỉ hiện dưới dạng dấu `*`.
 
 Cả ba lượt chạy đều có `done=True` và `expected=True`, nghĩa là chương trình kiểm chứng được booking hợp lệ cho ca thành công. Mỗi chiến lược gọi tool hai lần: tìm chuyến và đặt chuyến. Plan-then-Execute dùng thêm một lượt model để lập kế hoạch, vì vậy tổng số lượt model là bốn; ReAct và Hybrid có ba lượt. Trong lần đo này ReAct nhanh nhất (5,22 giây), kế đến Hybrid (5,79 giây), rồi Plan-then-Execute (8,26 giây).
 
